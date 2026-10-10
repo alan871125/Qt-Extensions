@@ -12,7 +12,13 @@ class DemoWindow(QWidget):
         super().__init__()
         self.setWindowTitle("Composition Circle Demo")
         self.circle = PieChartWidget(num_segments=3, sum_proportion=None)
-        self.circle.set_style()
+        
+        self.circle.setStyleSheet("""
+            qproperty-center_label_color: #DD2222;
+            font-weight: bold;
+            font-size: 50pt;
+            font-family: Arial;
+        """)
         
         layout = QVBoxLayout()
         layout.addWidget(self.circle)

@@ -2,6 +2,7 @@ import logging
 from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import Qt, QRectF, Signal
 from PySide6.QtGui import QPainter, QColor, QPen, QFont, QPaintEvent
+from PySide6.QtCore import Property
 from typing import Optional, override, TypedDict, Unpack, Sequence
 
 logger = logging.getLogger(__name__)
@@ -18,7 +19,6 @@ class PieChartStyleDict(TypedDict, total=False):
 class PieChartWidget(QWidget):
     """A custom QWidget that displays a differnt arcs based on the given proportions. """
     DEFAULT_COLOR_BG = QColor("#e0e0e0")
-    DEFAULT_FONT = QFont("Arial", 12, QFont.Weight.Bold)
     DEFAULT_FONT_COLOR = QColor("#333333")
     SEGMENT_COLORS = [
         "#FF8833", "#00BB33", "#3355FF", 
@@ -55,13 +55,15 @@ class PieChartWidget(QWidget):
     @property
     def center_label(self):
         return self._style.get('center_label', True)
-    @property
-    def center_label_font(self):
-        return self._style.get('center_label_font', self.DEFAULT_FONT)
-    @property
-    def center_label_color(self):
+    
+    @Property(QColor)
+    def center_label_color(self): # seems like pylance doesn't recognize this as a property
         return self._style.get('center_label_color', self.DEFAULT_FONT_COLOR)
-
+    @center_label_color.setter
+    def center_label_color(self, color:QColor):
+        self._style['center_label_color'] = color
+        self.update()  # Trigger a repaint
+    
     @override
     def paintEvent(self, a0:Optional[QPaintEvent]=None):
         w,h = self.width(), self.height()
@@ -72,7 +74,7 @@ class PieChartWidget(QWidget):
             painter = QPainter(self)
             painter.setRenderHint(QPainter.RenderHint.Antialiasing)
             painter.setPen(self.center_label_color)
-            painter.setFont(self.center_label_font)
+            painter.setFont(self.font())
             if self._sum is not None and self._sum > 0:
                 text = f"{sum(self.values)/self._sum:.0%}"
             else:
