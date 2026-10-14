@@ -17,7 +17,10 @@ class PieChartStyleDict(TypedDict, total=False):
     center_label_color: QColor
 
 class PieChartWidget(QWidget):
-    """A custom QWidget that displays a differnt arcs based on the given proportions. """
+    """A custom QWidget that displays a differnt arcs based on the given proportions. 
+    
+    The z-order of the pie chart and the center label can be controlled by setting the constants PIE_CHART_Z_ORDER and CENTER_LABEL_Z_ORDER, lower numbers are drawn first.
+    """
     DEFAULT_COLOR_BG = QColor("#e0e0e0")
     DEFAULT_FONT_COLOR = QColor("#333333")
     SEGMENT_COLORS = [
@@ -25,7 +28,8 @@ class PieChartWidget(QWidget):
         "#FFAA00", "#8844AA", "#33AAAA",
         "#AA3333", "#FFEE00", "#DD33BB"
     ]  # Example colors for segments
-    
+    PIE_CHART_Z_ORDER = 0  # Z-order for the pie chart
+    CENTER_LABEL_Z_ORDER = 1  # Z-order for the center label
     value_changed = Signal(int, int)  # Signal to emit when the value changes, start->end
     
     def __init__(
@@ -64,24 +68,24 @@ class PieChartWidget(QWidget):
         self._style['center_label_color'] = color
         self.update()  # Trigger a repaint
     
-    @override
-    def paintEvent(self, a0:Optional[QPaintEvent]=None):
+    def _paint_center_label(self):
+        """Draw the center label of the pie chart."""
+        if not self.center_label:
+            return
+        painter = QPainter(self)
+        painter.setPen(self.center_label_color)
+        painter.setFont(self.font())
+        if self._sum is not None and self._sum > 0:
+            text = f"{sum(self.values)/self._sum:.0%}"
+        else:
+            text = str(sum(self.values))
+        painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, text)
+        painter.end()
+        
+    def _paint_pie_chart(self):
+        """Draw the main pie chart based on the current proportions."""
         w,h = self.width(), self.height()
         size = min(w,h)
-        
-        if self._style.get('center_label', True):
-            # Draw the center label
-            painter = QPainter(self)
-            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-            painter.setPen(self.center_label_color)
-            painter.setFont(self.font())
-            if self._sum is not None and self._sum > 0:
-                text = f"{sum(self.values)/self._sum:.0%}"
-            else:
-                text = str(sum(self.values))
-            
-            painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, text)
-            painter.end()
         
         margin = self.bar_width / 2
         rect = QRectF(
@@ -117,6 +121,16 @@ class PieChartWidget(QWidget):
             painter.drawArc(rect, int(arc), int(span))
             arc += span
         painter.end()
+        
+    @override
+    def paintEvent(self, a0:Optional[QPaintEvent]=None):
+        """Override the paint event to draw the pie chart and center label."""
+        painter_funcs = {
+            self.PIE_CHART_Z_ORDER: self._paint_pie_chart,
+            self.CENTER_LABEL_Z_ORDER: self._paint_center_label
+        }
+        for z_order in sorted(painter_funcs.keys()):
+            painter_funcs[z_order]()
     
     @property
     def proportions(self):
