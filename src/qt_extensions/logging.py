@@ -3,7 +3,7 @@ from typing import Literal
 from PySide6.QtWidgets import QPlainTextEdit, QWidget
 from qt_extensions.core import TypedSignalWrapper
 
-__all__ = ["THEME_DARKER", "THEME_DEFAULT", "TextLoggingHandler", "HtmlFormatter"]
+__all__ = ["THEME_DARKER", "THEME_DEFAULT", "TextEditLoggingHandler", "HtmlFormatter"]
 
 THEME_DARKER = {
     "black":         "#3f4451",
@@ -42,7 +42,7 @@ THEME_DEFAULT = {
     "yellow":        "#ffff00",
 }
 
-class TextLoggingHandler(logging.Handler):
+class TextEditLoggingHandler(logging.Handler):
     log_signal = TypedSignalWrapper(str)
     DEFAULT_FONT_FAMILY = "Consolas"
     DEFAULT_FONT_SIZE = 10

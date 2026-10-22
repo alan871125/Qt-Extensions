@@ -13,7 +13,7 @@ A lightweight collection of utility extensions, type-safe signals, and custom wi
 - `PieChartWidget`: A customizable circular donut / pie chart widget supporting multiple segments, configurable styling, and real-time value updates.
 
 `logging`:
-- `TextLoggingHandler`: A logging handler that outputs log messages to a `QPlainTextEdit` widget, with optional HTML formatting for colored log levels by using with `HtmlFormatter`.
+- `TextEditLoggingHandler`: A logging handler that outputs log messages to a `QPlainTextEdit` widget, with optional HTML formatting for colored log levels by using with `HtmlFormatter`.
 ---
 
 ## Requirements

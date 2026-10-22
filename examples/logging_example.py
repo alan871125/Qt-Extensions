@@ -1,8 +1,8 @@
-"""Example usage of the TextLoggingHandler and HtmlFormatter"""
+"""Example usage of the TextEditLoggingHandler and HtmlFormatter"""
 import logging
 import sys
 from PySide6.QtWidgets import QApplication, QVBoxLayout, QPushButton, QWidget
-from qt_extensions.logging import TextLoggingHandler, HtmlFormatter
+from qt_extensions.logging import TextEditLoggingHandler, HtmlFormatter
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 try:
@@ -21,7 +21,7 @@ app = QApplication(sys.argv)
 window = QWidget()
 layout = QVBoxLayout(window)
 
-log_handler = TextLoggingHandler(window)
+log_handler = TextEditLoggingHandler(window)
 log_handler.setFormatter(
     HtmlFormatter(
         "%(log_color)s[%(asctime)s][%(levelname).1s][%(name)s]%(reset)s %(message)s",
