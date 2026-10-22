@@ -4,6 +4,8 @@ from typing_extensions import TypeForm
 import functools
 from PySide6.QtCore import QMetaObject, Qt, QObject, Signal
 
+__all__ = ["TypedSignal", "TypedSignalWrapper"]
+
 P = typing.ParamSpec("P")
 T1 = typing.TypeVar("T1")
 T2 = typing.TypeVar("T2")

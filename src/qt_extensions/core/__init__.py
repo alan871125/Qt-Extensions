@@ -1,1 +1,1 @@
-from .signal import TypedSignal
+from .signal import TypedSignal, TypedSignalWrapper
