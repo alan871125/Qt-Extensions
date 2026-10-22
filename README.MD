@@ -10,10 +10,9 @@ A lightweight collection of utility extensions, type-safe signals, and custom wi
 - `TypedSignal`: A type-hinted wrapper around `pyqtSignal` that provides full IDE autocompletion and static type checking (e.g. via Pylance / Mypy) for `.connect()` slots and `.emit()` arguments.
 
 `widgets`:
-- `PieChartWidget`: A customizable circular donut / pie chart widget supporting multiple segments, configurable styling, and real-time value updates.
+- `PieChartWidget`: A customizable circular donut / pie chart widget supporting multiple segments, configurable styling, and real-time value updates. [(example)](examples/pie_chart_widget_example.py)
 
-`logging`:
-- `TextEditLoggingHandler`: A logging handler that outputs log messages to a `QPlainTextEdit` widget, with optional HTML formatting for colored log levels by using with `HtmlFormatter`.
+- `TextEditLoggingHandler`: A logging handler that outputs log messages to a `QPlainTextEdit` widget, with optional HTML formatting for colored log levels by using with `HtmlFormatter`. [(example)](examples/logging_example.py)
 ---
 
 ## Requirements
@@ -83,4 +82,8 @@ To run the interactive pie chart demo:
 
 ```bash
 python examples/pie_chart_widget_example.py
+```
+Interactive logging demo with colored log levels:
+```bash
+python examples/logging_example.py
 ```
