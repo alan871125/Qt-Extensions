@@ -1,6 +1,6 @@
 import types
 import typing
-from PySide6.QtCore import Signal # type: ignore[attr-defined]
+from typing_extensions import TypeForm
 
 P = typing.ParamSpec("P")
 T1 = typing.TypeVar("T1")
@@ -22,12 +22,10 @@ def _resolve_qt_type(t: typing.Any) -> type:
     if origin is typing.Literal:
         arg_types = {type(a) for a in typing.get_args(t)}
         return arg_types.pop() if len(arg_types) == 1 else object
-
-    # Support both typing.Union and Python 3.10+ types.UnionType (PEP 604: X | Y)
-    if origin in (typing.Union, getattr(types, "UnionType", typing.Union)):
-        args = [a for a in typing.get_args(t) if a is not type(None)]
-        return _resolve_qt_type(args[0]) if len(args) == 1 else object
-
+    
+    if origin in (typing.Union, types.UnionType):
+        return object
+    
     if origin is not None:  # list[int], dict[str, int], etc.
         return origin
 
@@ -40,17 +38,17 @@ class TypedSignal(typing.Generic[P]):
     @typing.overload
     def __new__(cls) -> "TypedSignal[[]]": ...
     @typing.overload
-    def __new__(cls, t1: type[T1] | typing.Any, /) -> "TypedSignal[[T1]]": ...
+    def __new__(cls, t1: TypeForm[T1] | typing.Any, /) -> "TypedSignal[[T1]]": ...
     @typing.overload
-    def __new__(cls, t1: type[T1] | typing.Any, t2: type[T2] | typing.Any, /) -> "TypedSignal[[T1, T2]]": ...
+    def __new__(cls, t1: TypeForm[T1] | typing.Any, t2: TypeForm[T2] | typing.Any, /) -> "TypedSignal[[T1, T2]]": ...
     @typing.overload
-    def __new__(cls, t1: type[T1] | typing.Any, t2: type[T2] | typing.Any, t3: type[T3] | typing.Any, /) -> "TypedSignal[[T1, T2, T3]]": ...
+    def __new__(cls, t1: TypeForm[T1] | typing.Any, t2: TypeForm[T2] | typing.Any, t3: TypeForm[T3] | typing.Any, /) -> "TypedSignal[[T1, T2, T3]]": ...
     @typing.overload
-    def __new__(cls, t1: type[T1] | typing.Any, t2: type[T2] | typing.Any, t3: type[T3] | typing.Any, t4: type[T4] | typing.Any, /) -> "TypedSignal[[T1, T2, T3, T4]]": ...
+    def __new__(cls, t1: TypeForm[T1] | typing.Any, t2: TypeForm[T2] | typing.Any, t3: TypeForm[T3] | typing.Any, t4: TypeForm[T4] | typing.Any, /) -> "TypedSignal[[T1, T2, T3, T4]]": ...
     def __new__(cls, *types: typing.Any) -> typing.Any:
         return typing.cast("TypedSignal[typing.Any]", super().__new__(cls))
     def __init__(self, *types: typing.Any) -> None:
-        self._orig_types = types
+        # self._orig_types = types
         qt_types = tuple(_resolve_qt_type(t) for t in types)
         self._signal = Signal(*qt_types)
 
@@ -71,8 +69,11 @@ class _BoundTypedSignal(typing.Generic[P]):
     def __init__(self, bound_signal: typing.Any) -> None:
         self._bound_signal = bound_signal
 
-    def connect(self, slot: typing.Callable[P, typing.Any]) -> None:
-        self._bound_signal.connect(slot)
+    def connect(self, slot: typing.Callable[P, typing.Any], /, type: Qt.ConnectionType = Qt.ConnectionType.AutoConnection) -> QMetaObject.Connection:
+        return self._bound_signal.connect(slot, type)
+        
+    def disconnect(self, slot: typing.Callable[P, typing.Any]) -> None:
+        self._bound_signal.disconnect(slot)
 
     # This will cause a silence bug where the signal doesn't emit on a zero-arg signal, due to argument‑count mismatch.
     # def emit(self, *args: P.args, **kwargs: P.kwargs) -> None:
@@ -85,7 +86,7 @@ class _BoundTypedSignal(typing.Generic[P]):
         return typing.cast(typing.Callable[P, None], self._bound_signal.emit)
 
 if __name__ == "__main__":
-    from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton
+    from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton
     import sys
     class OtherWidget(QWidget):
         SignalType = TypedSignal[[int, str]]
