@@ -1,6 +1,8 @@
 import types
 import typing
 from typing_extensions import TypeForm
+import functools
+from PySide6.QtCore import QMetaObject, Qt, QObject, Signal
 
 P = typing.ParamSpec("P")
 T1 = typing.TypeVar("T1")
@@ -84,6 +86,74 @@ class _BoundTypedSignal(typing.Generic[P]):
         # This preserves Qt's native signal-to-signal connection semantics
         # (correct arity trimming) when this is used as a connect() target.
         return typing.cast(typing.Callable[P, None], self._bound_signal.emit)
+
+class _SignalEmitter(typing.Protocol[P]):
+    signal: _BoundTypedSignal[P]
+    def deleteLater(self) -> None: ...
+
+@functools.lru_cache(maxsize=None)
+def _emitter_class(types: tuple[type, ...]) -> typing.Callable[[], _SignalEmitter[...]]:
+    name = "_Emitter" + "".join(t.__name__.capitalize() for t in types)
+    cls = type(name, (QObject,), {"signal": TypedSignal(*types)})
+    return typing.cast("typing.Callable[[], _SignalEmitter[...]]", cls)
+
+class TypedSignalWrapper(typing.Generic[P]):
+    """
+    A Signal Wrapper that allows attatching a signal to Non-Qbject classes.
+    
+    **Warning:**
+    A connection to a non-QObject slot may run in the emitting thread.
+    If such a slot touches the GUI, it can crash due to thread-affinity issues.
+    Prefer QObject slots for GUI updates.
+    """
+    
+    @typing.overload
+    def __new__(cls) -> "TypedSignalWrapper[[]]": ...
+    @typing.overload
+    def __new__(cls, t1: TypeForm[T1] | typing.Any, /) -> "TypedSignalWrapper[[T1]]": ...
+    @typing.overload
+    def __new__(cls, t1: TypeForm[T1] | typing.Any, t2: TypeForm[T2] | typing.Any, /) -> "TypedSignalWrapper[[T1, T2]]": ...
+    @typing.overload
+    def __new__(cls, t1: TypeForm[T1] | typing.Any, t2: TypeForm[T2] | typing.Any, t3: TypeForm[T3] | typing.Any, /) -> "TypedSignalWrapper[[T1, T2, T3]]": ...
+    @typing.overload
+    def __new__(cls, t1: TypeForm[T1] | typing.Any, t2: TypeForm[T2] | typing.Any, t3: TypeForm[T3] | typing.Any, t4: TypeForm[T4] | typing.Any, /) -> "TypedSignalWrapper[[T1, T2, T3, T4]]": ...
+    def __new__(cls, *types: typing.Any) -> typing.Any:
+        return super().__new__(cls)
+
+    def __init__(self, *types: typing.Any) -> None:
+        qt_types = tuple(_resolve_qt_type(t) for t in types)
+        self._emitter: _SignalEmitter[P] = _emitter_class(qt_types)()
+
+    def connect(self, slot: typing.Callable[P, typing.Any], type:Qt.ConnectionType=Qt.ConnectionType.AutoConnection,/,warn: bool = True) -> QMetaObject.Connection:
+        """
+        Connects the signal to a slot.
+
+        Arguments:
+            slot (typing.Callable[P, typing.Any]): The slot to connect to.
+            type (Qt.ConnectionType): The type of connection.
+            warn (bool): Whether to warn if the slot is not a QObject method. Turn False if you know what you're doing and want to avoid the warning.
+
+        Returns:
+            A connection object.
+        """
+        
+        owner = getattr(slot, "__self__", None)
+        if warn and not isinstance(owner, QObject):
+            import warnings
+            warnings.warn(
+                "Connecting a plain callable: it may run in the emitting thread. "
+                "Prefer a QObject method for anything that touches the GUI.",
+                stacklevel=2,
+            )
+        return self._emitter.signal.connect(slot, type)
+
+    def disconnect(self, slot: typing.Callable[P, typing.Any]) -> None:
+        self._emitter.signal.disconnect(slot) 
+        
+    @property
+    def emit(self) -> typing.Callable[P, None]:
+        # Still return the real bound emit at runtime (not a wrapper function).
+        return self._emitter.signal.emit
 
 if __name__ == "__main__":
     from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton
