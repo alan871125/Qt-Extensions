@@ -5,10 +5,15 @@ A lightweight collection of utility extensions, type-safe signals, and custom wi
 ---
 
 ## Features
+`core.signal`:
+- `TypedSignalWrapper`: A type-safe wrapper for Qt signals that allows attaching signals to non-QObject classes.
+- `TypedSignal`: A type-hinted wrapper around `pyqtSignal` that provides full IDE autocompletion and static type checking (e.g. via Pylance / Mypy) for `.connect()` slots and `.emit()` arguments.
 
-- **`TypedSignal` (`core`)**: A type-hinted wrapper around `pyqtSignal` that provides full IDE autocompletion and static type checking (e.g. via Pylance / Mypy) for `.connect()` slots and `.emit()` arguments.
-- **`PieChartWidget` (`widgets`)**: A customizable circular donut / pie chart widget supporting multiple segments, configurable styling, and real-time value updates.
+`widgets`:
+- `PieChartWidget`: A customizable circular donut / pie chart widget supporting multiple segments, configurable styling, and real-time value updates.
 
+`logging`:
+- `TextLoggingHandler`: A logging handler that outputs log messages to a `QPlainTextEdit` widget, with optional HTML formatting for colored log levels by using with `HtmlFormatter`.
 ---
 
 ## Requirements
