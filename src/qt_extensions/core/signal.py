@@ -2,7 +2,7 @@ import types
 import typing
 from typing_extensions import TypeForm
 import functools
-from PySide6.QtCore import QMetaObject, Qt, QObject, Signal
+from PySide6.QtCore import QMetaObject, Qt, QObject, Signal, SignalInstance
 
 __all__ = ["TypedSignal", "TypedSignalWrapper"]
 
@@ -140,7 +140,7 @@ class TypedSignalWrapper(typing.Generic[P]):
         """
         
         owner = getattr(slot, "__self__", None)
-        if warn and not isinstance(owner, QObject):
+        if warn and not isinstance(owner, (QObject, SignalInstance)):
             import warnings
             warnings.warn(
                 "Connecting a plain callable: it may run in the emitting thread. "

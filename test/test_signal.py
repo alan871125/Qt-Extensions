@@ -78,3 +78,22 @@ class TestTypedSignalWrapper:
         obj = NormalObject()
         obj.signal.connect(qobj.foo)
         obj.signal.emit("Hello")
+
+    def test_signal_forwarding(self):
+        class QObject1(QObject):
+            signal = TypedSignal(str)
+            def __init__(self):
+                super().__init__()
+                self.v = None
+                self.signal.connect(self.foo)
+            def foo(self, value: str):
+                self.v = value
+                assert isinstance(value, str)
+        class Object1:
+            signal = TypedSignalWrapper(str)
+            def __init__(self, obj: QObject1):
+                self.signal.connect(obj.signal.emit)
+        qobj1 = QObject1()
+        obj1 = Object1(qobj1)
+        obj1.signal.emit("Hello")
+        assert qobj1.v == "Hello"
