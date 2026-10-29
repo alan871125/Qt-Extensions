@@ -47,6 +47,11 @@ class PieChartWidget(QWidget):
         self._style.update(kwargs)
         self.update()  # Trigger a repaint
     
+    def set_sum_proportion(self, sum_proportion:Optional[float]):
+        """Set the total sum for the proportions. If None, the sum is dynamic based on the values."""
+        self._sum = sum_proportion
+        self.update()  # Trigger a repaint
+
     @property
     def bar_width(self):
         return self._style.get('bar_width', 36)
